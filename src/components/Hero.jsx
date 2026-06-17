@@ -75,7 +75,8 @@ function Hero({ language, onToggleLanguage }) {
         muted
         loop
         playsInline
-        poster="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=2400&q=80"
+        preload="metadata"
+        disablePictureInPicture
       >
         <source src="/videos/hero-robot.mp4" type="video/mp4" />
       </video>

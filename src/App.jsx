@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import Hero from "./components/Hero.jsx";
-import ProjectShowcase from "./components/ProjectShowcase.jsx";
-import ContactSection from "./components/ContactSection.jsx";
 import { analyzeRows } from "./utils/dataAnalysis.js";
 import { sampleFileName, sampleRows } from "./utils/sampleData.js";
 
 const historyKey = "aida-project-history";
+const ProjectShowcase = lazy(() => import("./components/ProjectShowcase.jsx"));
+const ContactSection = lazy(() => import("./components/ContactSection.jsx"));
 
 function App() {
   const appRef = useRef(null);
@@ -16,10 +14,21 @@ function App() {
   const [language, setLanguage] = useState("zh");
 
   useEffect(() => {
+    let context;
+    let isCancelled = false;
+
+    async function setupAnimations() {
+      const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+
+      if (isCancelled) return;
+
     gsap.registerPlugin(ScrollTrigger);
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const context = gsap.context(() => {
+    context = gsap.context(() => {
       if (prefersReducedMotion) {
         gsap.set(".opening-overlay", { autoAlpha: 0, pointerEvents: "none" });
         return;
@@ -92,7 +101,14 @@ function App() {
       });
     }, appRef);
 
-    return () => context.revert();
+    }
+
+    setupAnimations();
+
+    return () => {
+      isCancelled = true;
+      context?.revert();
+    };
   }, []);
 
   const applyDataset = (rows, fileName, source = "upload") => {
@@ -140,18 +156,60 @@ function App() {
         </div>
       </div>
       <Hero language={language} onToggleLanguage={toggleLanguage} />
-      <ProjectShowcase
-        language={language}
-        analysisState={analysisState}
-        projectHistory={projectHistory}
-        onAnalysisReady={handleAnalysisReady}
-        onLoadSample={loadSampleDataset}
-        onLoadHistoryProject={loadHistoryProject}
-        onDatasetChange={applyDataset}
-      />
-      <ContactSection language={language} />
+      <LazySection id="workflow" minHeight="1000px">
+        <Suspense fallback={<SectionFallback />}>
+          <ProjectShowcase
+            language={language}
+            analysisState={analysisState}
+            projectHistory={projectHistory}
+            onAnalysisReady={handleAnalysisReady}
+            onLoadSample={loadSampleDataset}
+            onLoadHistoryProject={loadHistoryProject}
+            onDatasetChange={applyDataset}
+          />
+        </Suspense>
+      </LazySection>
+      <LazySection id="contact" minHeight="760px">
+        <Suspense fallback={<SectionFallback />}>
+          <ContactSection language={language} />
+        </Suspense>
+      </LazySection>
     </main>
   );
+}
+
+function LazySection({ id, minHeight, children }) {
+  const ref = useRef(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsReady(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "640px 0px", threshold: 0.01 }
+    );
+
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (!isReady) {
+    return <section id={id} ref={ref} style={{ minHeight }} aria-hidden="true" />;
+  }
+
+  return <div ref={ref}>{children}</div>;
+}
+
+function SectionFallback() {
+  return <section className="min-h-screen bg-[#f6fdff]" aria-hidden="true" />;
 }
 
 function readHistory() {

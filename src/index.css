@@ -246,6 +246,12 @@ input {
   z-index: 1;
 }
 
+#workflow,
+#contact {
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px;
+}
+
 .glass-nav-shell {
   position: fixed;
   overflow: hidden;

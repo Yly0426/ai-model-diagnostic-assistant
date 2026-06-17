@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { jsPDF } from "jspdf";
 import { buildReportMarkdown } from "../utils/dataAnalysis.js";
 
 const copy = {
@@ -30,7 +29,8 @@ function ReportExportPanel({ language, analysisState }) {
     downloadFile(markdown, "ai-data-analysis-report.md", "text/markdown;charset=utf-8");
   };
 
-  const exportPdf = () => {
+  const exportPdf = async () => {
+    const { jsPDF } = await import("jspdf");
     const markdown = buildReportMarkdown(analysisState, language);
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const lines = doc.splitTextToSize(markdown.replace(/^#+\s/gm, ""), 500);

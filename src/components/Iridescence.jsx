@@ -1,5 +1,5 @@
 import { Renderer, Program, Mesh, Color, Triangle } from "ogl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./Iridescence.css";
 
 const vertexShader = `
@@ -45,15 +45,46 @@ void main() {
 }
 `;
 
-function Iridescence({ color = [0.58, 0.89, 0.91], speed = 1, amplitude = 0.1, mouseReact = false, className = "" }) {
+function Iridescence({
+  color = [0.58, 0.89, 0.91],
+  speed = 1,
+  amplitude = 0.1,
+  mouseReact = false,
+  className = "",
+  fps = 30,
+}) {
   const containerRef = useRef(null);
   const mousePos = useRef({ x: 0.5, y: 0.5 });
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current) return undefined;
+    const container = containerRef.current;
+    if (!container) return undefined;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShouldRender(entry.isIntersecting);
+      },
+      { rootMargin: "240px 0px", threshold: 0.01 }
+    );
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!containerRef.current || !shouldRender) return undefined;
 
     const container = containerRef.current;
-    const renderer = new Renderer({ alpha: true, antialias: false });
+    const renderer = new Renderer({
+      alpha: true,
+      antialias: false,
+      dpr: Math.min(window.devicePixelRatio || 1, 1.35),
+    });
     const gl = renderer.gl;
     gl.clearColor(1, 1, 1, 0);
 
@@ -85,9 +116,13 @@ function Iridescence({ color = [0.58, 0.89, 0.91], speed = 1, amplitude = 0.1, m
 
     const mesh = new Mesh(gl, { geometry, program });
     let animationId;
+    let lastRender = 0;
+    const frameInterval = 1000 / fps;
 
     function update(time) {
       animationId = requestAnimationFrame(update);
+      if (time - lastRender < frameInterval) return;
+      lastRender = time;
       program.uniforms.uTime.value = time * 0.001;
       renderer.render({ scene: mesh });
     }
@@ -119,7 +154,7 @@ function Iridescence({ color = [0.58, 0.89, 0.91], speed = 1, amplitude = 0.1, m
       }
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [amplitude, color, mouseReact, speed]);
+  }, [amplitude, color, fps, mouseReact, shouldRender, speed]);
 
   return <div ref={containerRef} className={`iridescence-container ${className}`} />;
 }
