@@ -14,6 +14,7 @@ const copy = {
     titleTop: "AI DATA",
     titleBottom: "ANALYST",
     badge: "Dashboard",
+    demo: "Demo",
     subtitle: "上传数据集，快速发现趋势、异常与业务机会。",
     primary: "上传数据集",
     secondary: "查看工作流",
@@ -37,6 +38,7 @@ const copy = {
     titleTop: "AI DATA",
     titleBottom: "ANALYST",
     badge: "Dashboard",
+    demo: "Demo",
     subtitle: "Upload a dataset to surface trends, anomalies, and business opportunities.",
     primary: "Upload Dataset",
     secondary: "View Workflow",
@@ -117,6 +119,10 @@ function Hero({ language, onToggleLanguage }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
+          <div className="hero-copy mb-7 inline-flex items-center gap-3 rounded-full border border-sky-200/80 bg-white/45 px-5 py-2 font-mono text-xs font-bold uppercase tracking-[0.24em] text-[#0284a8] shadow-lg shadow-sky-200/20 backdrop-blur-xl">
+            <span className="h-2 w-2 rounded-full bg-[#38bdf8] shadow-[0_0_16px_rgba(56,189,248,0.8)]" />
+            {text.demo}
+          </div>
           <h1 className="hero-title font-display text-[118px] font-black uppercase leading-[0.84] tracking-[-0.07em] text-[#082033]">
             <span className="block">{text.titleTop}</span>
             <span className="block">
@@ -148,7 +154,7 @@ function Hero({ language, onToggleLanguage }) {
         </motion.div>
 
         <motion.div
-          className="hero-preview absolute bottom-8 left-1/2 grid w-[min(1500px,calc(100%-80px))] -translate-x-1/2 grid-cols-4 gap-4"
+          className="hero-preview absolute bottom-8 left-10 right-10 mx-auto grid max-w-[1500px] grid-cols-4 gap-4"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.25, ease: "easeOut" }}
